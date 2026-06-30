@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Báo Cáo Công Tác</title>
+    <style>
+        :root { --primary: #1a73e8; --secondary: #34a853; --danger: #ea4335; --gray: #5f6368; --light-bg: #e8f0fe; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 10px; }
+        .container { max-width: 1250px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-height: 95vh; }
+        
+        /* Login Styles */
+        .login-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            width: 380px;
+            max-width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-box h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .login-box .form-group {
+            margin-bottom: 18px;
+        }
+        .login-box label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .login-box input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .login-box .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .login-box .btn-login:hover { background: #1557b0; }
+        .login-box .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+        .login-box .switch-link {
+            text-align: center;
+            margin-top: 15px;
+            color: var(--gray);
+            font-size: 14px;
+        }
+        .login-box .switch-link a {
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .login-box .switch-link a:hover { text-decoration: underline; }
+        .login-box .error-msg {
+            color: var(--danger);
+            font-size: 13px;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+        .login-box .success-msg {
+            color: var(--secondary);
+            font-size: 13px;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            background: var(--light-bg);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #d1e3ff;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-email {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .btn-logout {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .btn-logout:hover { opacity: 0.8; }
+
+        .header-fixed { position: sticky; top: 0; background: white; z-index: 1000; padding: 15px 15px 5px 15px; margin: -15px -15px 10px -15px; border-radius: 12px 12px 0 0; }
+        h1 { text-align: center; color: var(--primary); margin: 0 0 10px 0; font-size: 22px; }
+        .tabs { display: flex; gap: 5px; border-bottom: 2px solid #eee; margin-bottom: 10px; flex-wrap: wrap; }
+        .tab-link { padding: 10px 25px; cursor: pointer; border: none; background: none; font-size: 15px; font-weight: 600; color: var(--gray); border-bottom: 3px solid transparent; transition: 0.3s; }
+        .tab-link.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; animation: fadeIn 0.4s; }
+        .tab-content.active { display: block; }
+
+        .toolbar { 
+            display: flex; gap: 12px; background: var(--light-bg); padding: 10px 15px; 
+            border-radius: 8px; margin-bottom: 15px; align-items: center; 
+            position: sticky; top: 105px; z-index: 999; border: 1px solid #d1e3ff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+        }
+        
+        .week-select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-weight: 600; font-family: inherit; color: #333; cursor: pointer; min-width: 250px; }
+        select, input[type="number"] { padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+
+        .calendar-dropdown-cls { display: none; position: absolute; top: 105%; left: 15px; z-index: 1001; background: white; border: 1px solid #ddd; box-shadow: 0 10px 25px rgba(0,0,0,0.15); padding: 15px; border-radius: 8px; width: 300px; }
+        .cal-table { width: 100%; text-align: center; border-collapse: collapse; }
+        .cal-table td { padding: 8px 3px; cursor: pointer; border-radius: 4px; font-size: 13px; }
+        .cal-table tr.selected-week td { background-color: var(--primary) !important; color: white !important; font-weight: bold; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 15px; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; background: #fff; }
+        .card h2 { margin: 0 0 10px 0; font-size: 16px; color: #d93025; border-left: 4px solid #d93025; padding-left: 10px; }
+        .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        textarea { width: 100%; height: 120px; padding: 8px; border: 1px solid #dadce0; border-radius: 4px; resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 13.5px; }
+
+        button { border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; padding: 8px 16px; display: flex; align-items: center; gap: 6px; font-size: 14px; }
+        .btn-save { background: var(--secondary); color: white; margin-left: auto; }
+        .btn-agg { background: var(--primary); color: white; }
+        .btn-word { background: #2b579a; color: white; }
+        
+        .summary-preview { background: #fff; border: 1px solid #ccc; padding: 40px; margin-top: 5px; min-height: 500px; }
+        .preview-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .preview-table th, .preview-table td { border: 1px solid black; padding: 12px; text-align: left; vertical-align: top; font-size: 15px; line-height: 1.6; color: #000; font-family: "Times New Roman", Times, serif; }
+        .preview-table th { background: #f2f2f2; font-weight: bold; text-align: center; }
+        
+        .schedule-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff; }
+        .schedule-table th, .schedule-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .schedule-table th { background: var(--light-bg); color: #333; font-weight: bold; text-align: center; }
+        .schedule-table td input, .schedule-table td textarea { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-family: inherit;
+            resize: vertical; 
+            min-height: 60px; 
+        }
+
+        .schedule-view-item {
+            border-bottom: 1px solid #d3d3d3;
+            padding: 15px 0;
+        }
+        .schedule-view-item:last-child {
+            border-bottom: none;
+        }
+        .schedule-view-day {
+            text-align: center;
+            color: #c00000;
+            font-family: 'Times New Roman';
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .schedule-view-content {
+            font-family: 'Times New Roman';
+            font-size: 11pt;
+            line-height: 1.5;
+            padding-left: 10px;
+        }
+        .schedule-view-content .event-item {
+            margin: 4px 0;
+        }
+        .schedule-view-content .event-label {
+            font-weight: bold;
+        }
+        .schedule-view-empty {
+            color: #7f7f7f;
+            font-style: italic;
+            margin: 4px 0;
+        }
+        .schedule-view-title {
+            text-align: center;
+            font-family: 'Times New Roman';
+            font-size: 16pt;
+            color: #002060;
+            margin: 0 0 5px 0;
+        }
+        .schedule-view-subtitle {
+            text-align: center;
+            font-style: italic;
+            font-family: 'Times New Roman';
+            font-size: 12pt;
+            color: #404040;
+            margin: 0 0 25px 0;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .toolbar { flex-direction: column; align-items: stretch; top: 135px; }
+            .week-select { min-width: 100%; }
+            .grid { grid-template-columns: 1fr; }
+            .tabs { flex-direction: column; }
+            .tab-link { text-align: center; }
+            .login-box { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div id="loginOverlay" class="login-overlay">
+    <div class="login-box" id="loginBox">
+        <h2 id="loginTitle">🔐 ĐĂNG NHẬP</h2>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+            <label>Mật khẩu</label>
+            <input type="password" id="loginPassword" placeholder="••••••••">
+        </div>
+        <button class="btn-login" id="loginBtn">Đăng nhập</button>
+        <div class="error-msg" id="loginError"></div>
+        <div class="switch-link">
+            Chưa có tài khoản? <a id="switchToRegister">Đăng ký ngay</a>
+        </div>
+    </div>
+
+    <!-- Register Box (hidden by default) -->
+    <div class="login-box" id="registerBox" style="display:none;">
+        <h2 id="registerTitle">📝 ĐĂNG KÝ</h2>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="registerEmail" placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+            <label>Mật khẩu (tối thiểu 6 ký tự)</label>
+            <input type="password" id="registerPassword" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+            <label>Xác nhận mật khẩu</label>
+            <input type="password" id="registerPasswordConfirm" placeholder="••••••••">
+        </div>
+        <button class="btn-login" id="registerBtn">Đăng ký</button>
+        <div class="error-msg" id="registerError"></div>
+        <div class="success-msg" id="registerSuccess"></div>
+        <div class="switch-link">
+            Đã có tài khoản? <a id="switchToLogin">Đăng nhập ngay</a>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="mainContent" style="display:none;">
+    <div class="user-header">
+        <div class="user-info">
+            <span>👤</span>
+            <span class="user-email" id="userEmailDisplay">user@email.com</span>
+        </div>
+        <button class="btn-logout" id="logoutBtn">🚪 Đăng xuất</button>
+    </div>
+
+    <div class="header-fixed">
+        <h1>Hệ Thống Quản Lý Báo Cáo Tuần/Tháng/Năm</h1>
+        <div class="tabs">
+            <button class="tab-link active" onclick="openTab(event, 'input-tab')">📍 Nhập dữ liệu Tuần</button>
+            <button class="tab-link" onclick="openTab(event, 'schedule-tab')">📅 Lịch công tác tuần</button>
+            <button class="tab-link" onclick="openTab(event, 'view-schedule-tab')">👁️ Xem Lịch công tác</button>
+            <button class="tab-link" onclick="openTab(event, 'summary-tab')">📊 Tổng hợp Báo cáo</button>
+        </div>
+    </div>
+
+    <!-- TAB 1: NHẬP DỮ LIỆU -->
+    <div id="input-tab" class="tab-content active">
+        <div class="toolbar">
+            <strong>Thời gian:</strong>
+            <select id="week-select-box" class="week-select"></select>
+            <button onclick="toggleCalendar(event, 'calendar-dropdown')" style="background:#fff; border:1px solid #ccc; padding:8px;">📅</button>
+
+            <div id="calendar-dropdown" class="calendar-dropdown-cls">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <button onclick="changeMonth(-1)">◀</button>
+                    <b class="cal-month-year-lbl">Tháng 05/2026</b>
+                    <button onclick="changeMonth(1)">▶</button>
+                </div>
+                <table class="cal-table">
+                    <thead><tr><th>T.</th><th>H</th><th>B</th><th>T</th><th>N</th><th>S</th><th>B</th><th>C</th></tr></thead>
+                    <tbody class="cal-body-content"></tbody>
+                </table>
+            </div>
+
+            <span id="load-status" style="color: var(--gray); font-style: italic; font-size: 12px;"></span>
+            <button class="btn-save" id="saveBtn">💾 Lưu Lên Hệ Thống</button>
+            <span style="color: red; font-weight: bold; margin-left: 10px;">Nhớ bấm lưu khi có dữ liệu</span>
+
+            <input type="hidden" id="w"> <input type="hidden" id="m"> <input type="hidden" id="y">
+            <input type="hidden" id="date-from"> <input type="hidden" id="date-to">
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>1. Mặt trận Tổ quốc (MTTQ)</h2>
+                <div class="input-group">
+                    <div><label style="font-size:12px; font-weight:bold;">Kết quả:</label><textarea id="mttq-kq"></textarea></div>
+                    <div><label style="font-size:12px; font-weight:bold;">Phương hướng:</label><textarea id="mttq-ph"></textarea></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>2. Đoàn Thanh niên (ĐTN)</h2>
+                <div class="input-group">
+                    <div><label style="font-size:12px; font-weight:bold;">Kết quả:</label><textarea id="dtn-kq"></textarea></div>
+                    <div><label style="font-size:12px; font-weight:bold;">Phương hướng:</label><textarea id="dtn-ph"></textarea></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>3. Cựu chiến binh (CCB)</h2>
+                <div class="input-group">
+                    <div><label style="font-size:12px; font-weight:bold;">Kết quả:</label><textarea id="ccb-kq"></textarea></div>
+                    <div><label style="font-size:12px; font-weight:bold;">Phương hướng:</label><textarea id="ccb-ph"></textarea></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>4. Hội Phụ nữ</h2>
+                <div class="input-group">
+                    <div><label style="font-size:12px; font-weight:bold;">Kết quả:</label><textarea id="pn-kq"></textarea></div>
+                    <div><label style="font-size:12px; font-weight:bold;">Phương hướng:</label><textarea id="pn-ph"></textarea></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: NHẬP LỊCH CÔNG TÁC -->
+    <div id="schedule-tab" class="tab-content">
+        <div class="toolbar">
+            <strong>Thời gian:</strong>
+            <select id="schedule-week-select" class="week-select"></select>
+            <button onclick="toggleCalendar(event, 'schedule-calendar-dropdown')" style="background:#fff; border:1px solid #ccc; padding:8px;">📅</button>
+
+            <div id="schedule-calendar-dropdown" class="calendar-dropdown-cls">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <button onclick="changeMonth(-1)">◀</button>
+                    <b class="cal-month-year-lbl">Tháng 05/2026</b>
+                    <button onclick="changeMonth(1)">▶</button>
+                </div>
+                <table class="cal-table">
+                    <thead><tr><th>T.</th><th>H</th><th>B</th><th>T</th><th>N</th><th>S</th><th>B</th><th>C</th></tr></thead>
+                    <tbody class="cal-body-content"></tbody>
+                </table>
+            </div>
+
+            <input type="hidden" id="schedule-industry-select" value="MTTQ">
+
+            <span id="schedule-load-status" style="color: var(--gray); font-style: italic; font-size: 12px;"></span>
+            <button class="btn-save" id="scheduleSaveBtn">💾 Lưu Lịch Tuần</button>
+            <button class="btn-word" onclick="exportScheduleToWord()">📝 Xuất File Lịch</button>
+
+            <input type="hidden" id="sch-w"> <input type="hidden" id="sch-y">
+        </div>
+
+        <div id="schedule-capture-area" style="background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+            <h2 id="sch-title" style="text-align: center; font-family: 'Times New Roman'; margin: 5px 0;">LỊCH CÔNG TÁC TUẦN</h2>
+            <p id="sch-subtitle" style="text-align: center; font-family: 'Times New Roman'; font-style: italic; margin-bottom: 15px;">Đơn vị: Mặt trận Tổ quốc Việt Nam phường Ninh Kiều</p>
+            
+            <table class="schedule-table" style="font-family: 'Times New Roman'; table-layout: fixed;">
+                <thead>
+                    <tr>
+                        <th style="width: 13%;">Thứ / Ngày</th>
+                        <th style="width: 29%;">Buổi Sáng</th>
+                        <th style="width: 29%;">Buổi Chiều</th>
+                        <th style="width: 29%;">Buổi Tối</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><b>Thứ Hai</b> <br><span id="lbl-t2" style="font-size:12px; color:gray;"></span></td><td><textarea id="sch-t2-sang"></textarea></td><td><textarea id="sch-t2-chieu"></textarea></td><td><textarea id="sch-t2-toi"></textarea></td></tr>
+                    <tr><td><b>Thứ Ba</b> <br><span id="lbl-t3" style="font-size:12px; color:gray;"></span></td><td><textarea id="sch-t3-sang"></textarea></td><td><textarea id="sch-t3-chieu"></textarea></td><td><textarea id="sch-t3-toi"></textarea></td></tr>
+                    <tr><td><b>Thứ Tư</b> <br><span id="lbl-t4" style="font-size:12px; color:gray;"></span></td><td><textarea id="sch-t4-sang"></textarea></td><td><textarea id="sch-t4-chieu"></textarea></td><td><textarea id="sch-t4-toi"></textarea></td></tr>
+                    <tr><td><b>Thứ Năm</b> <br><span id="lbl-t5" style="font-size:12px; color:gray;"></span></td><td><textarea id="sch-t5-sang"></textarea></td><td><textarea id="sch-t5-chieu"></textarea></td><td><textarea id="sch-t5-toi"></textarea></td></tr>
+                    <tr><td><b>Thứ Sáu</b> <br><span id="lbl-t6" style="font-size:12px; color:gray;"></span></td><td><textarea id="sch-t6-sang"></textarea></td><td><textarea id="sch-t6-chieu"></textarea></td><td><textarea id="sch-t6-toi"></textarea></td></tr>
+                    <tr><td><b>Thứ Bảy</b> <br><span id="lbl-t7" style="font-size:12px; color:gray;"></span></td><td><textarea id="sch-t7-sang"></textarea></td><td><textarea id="sch-t7-chieu"></textarea></td><td><textarea id="sch-t7-toi"></textarea></td></tr>
+                    <tr><td><b>Chủ Nhật</b> <br><span id="lbl-cn" style="font-size:12px; color:gray;"></span></td><td><textarea id="sch-cn-sang"></textarea></td><td><textarea id="sch-cn-chieu"></textarea></td><td><textarea id="sch-cn-toi"></textarea></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: XEM LỊCH CÔNG TÁC (Dạng danh sách giống xuất file) -->
+    <div id="view-schedule-tab" class="tab-content">
+        <div class="toolbar">
+            <strong>Thời gian:</strong>
+            <select id="view-schedule-week-select" class="week-select"></select>
+            <button onclick="toggleCalendar(event, 'view-schedule-calendar-dropdown')" style="background:#fff; border:1px solid #ccc; padding:8px;">📅</button>
+
+            <div id="view-schedule-calendar-dropdown" class="calendar-dropdown-cls">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <button onclick="changeMonth(-1)">◀</button>
+                    <b class="cal-month-year-lbl">Tháng 05/2026</b>
+                    <button onclick="changeMonth(1)">▶</button>
+                </div>
+                <table class="cal-table">
+                    <thead><tr><th>T.</th><th>H</th><th>B</th><th>T</th><th>N</th><th>S</th><th>B</th><th>C</th></tr></thead>
+                    <tbody class="cal-body-content"></tbody>
+                </table>
+            </div>
+
+            <input type="hidden" id="view-sch-w"> 
+            <input type="hidden" id="view-sch-y">
+            <span id="view-schedule-load-status" style="color: var(--gray); font-style: italic; font-size: 12px;"></span>
+            <button class="btn-word" onclick="exportViewScheduleToWord()">📝 Xuất File Lịch</button>
+        </div>
+
+        <!-- Khu vực hiển thị lịch dạng danh sách -->
+        <div id="view-schedule-display" style="background: white; padding: 30px; border: 1px solid #ccc; border-radius: 8px; min-height: 400px;">
+            <h2 id="view-sch-title" class="schedule-view-title">LỊCH CÔNG TÁC TUẦN</h2>
+            <p id="view-sch-subtitle" class="schedule-view-subtitle">Đơn vị: Mặt trận Tổ quốc Việt Nam phường Ninh Kiều</p>
+            
+            <div id="view-schedule-list">
+                <p style="text-align:center; color:gray; font-style:italic;">Chọn tuần để xem lịch công tác</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: TỔNG HỢP BÁO CÁO -->
+    <div id="summary-tab" class="tab-content">
+        <div class="toolbar">
+            <strong>Xem theo:</strong>
+            <select id="view-type" onchange="toggleViewInputs()">
+                <option value="week">Tuần cụ thể</option>
+                <option value="month" selected>Tổng hợp Tháng</option>
+                <option value="year">Tổng hợp Năm</option>
+            </select>
+
+            <span id="input-week-group" style="display:none;">
+                Tuần: <input type="number" id="view-w" min="1" max="53" style="width:60px;">
+            </span>
+
+            <select id="view-m">
+                <script>for(let i=1;i<=12;i++) document.write(`<option value="${String(i).padStart(2,'0')}">Tháng ${i}</option>`)</script>
+            </select>
+
+            <select id="view-y">
+                <script>for(let i=2025;i<=2040;i++) document.write(`<option value="${i}">Năm ${i}</option>`)</script>
+            </select>
+
+            <button class="btn-agg" id="aggBtn">🔍 Tổng hợp dữ liệu</button>
+            <button class="btn-word" onclick="exportToWord()">📝 Xuất File Word</button>
+        </div>
+
+        <div id="capture-area" class="summary-preview">
+            <h2 style="text-align: center; margin: 0; font-family: 'Times New Roman';">BÁO CÁO CÔNG TÁC</h2>
+            <p style="text-align: center; font-style: italic; margin: 10px 0 30px 0; font-family: 'Times New Roman'; font-size: 18px;" id="out-time"></p>
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Đơn vị</th>
+                        <th style="width: 42%;">Kết quả đạt được</th>
+                        <th style="width: 42%;">Phương hướng nhiệm vụ</th>
+                    </tr>
+                </thead>
+                <tbody id="out-body">
+                    <tr><td colspan="3" style="text-align:center; color:gray;">Chưa có dữ liệu. Vui lòng chọn thời gian và bấm Tổng hợp.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = { 
+  apiKey : "AIzaSyDpW1hoyJBv5DP0WccDDHmGkPMNMKM0UL8" , 
+  authDomain : "qlbc-9593f.firebaseapp.com" , 
+  databaseURL : "https://qlbc-9593f-default-rtdb.asia-southeast1.firebasedatabase.app" , 
+  projectId : "qlbc-9593f" , 
+  storageBucket : "qlbc-9593f.firebasestorage.app" , 
+  messagingSenderId : "552725252979" , 
+  appId : "1:552725252979:web:b7113bfc280f7eddba9306" 
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    // DOM elements
+    const loginOverlay = document.getElementById('loginOverlay');
+    const loginBox = document.getElementById('loginBox');
+    const registerBox = document.getElementById('registerBox');
+    const mainContent = document.getElementById('mainContent');
+    const userEmailDisplay = document.getElementById('userEmailDisplay');
+
+    // Login elements
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginError = document.getElementById('loginError');
+
+    // Register elements
+    const registerEmail = document.getElementById('registerEmail');
+    const registerPassword = document.getElementById('registerPassword');
+    const registerPasswordConfirm = document.getElementById('registerPasswordConfirm');
+    const registerBtn = document.getElementById('registerBtn');
+    const registerError = document.getElementById('registerError');
+    const registerSuccess = document.getElementById('registerSuccess');
+
+    // Switch links
+    const switchToRegister = document.getElementById('switchToRegister');
+    const switchToLogin = document.getElementById('switchToLogin');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Auth state management
+    let currentUser = null;
+    let currentUserId = null;
+
+    // Switch between login and register forms
+    switchToRegister.addEventListener('click', () => {
+        loginBox.style.display = 'none';
+        registerBox.style.display = 'block';
+        loginError.textContent = '';
+        registerError.textContent = '';
+        registerSuccess.textContent = '';
+    });
+
+    switchToLogin.addEventListener('click', () => {
+        registerBox.style.display = 'none';
+        loginBox.style.display = 'block';
+        loginError.textContent = '';
+        registerError.textContent = '';
+        registerSuccess.textContent = '';
+    });
+
+    // Register
+    registerBtn.addEventListener('click', async () => {
+        const email = registerEmail.value.trim();
+        const password = registerPassword.value;
+        const confirm = registerPasswordConfirm.value;
+
+        registerError.textContent = '';
+        registerSuccess.textContent = '';
+
+        if (!email || !password || !confirm) {
+            registerError.textContent = 'Vui lòng điền đầy đủ thông tin';
+            return;
+        }
+        if (password.length < 6) {
+            registerError.textContent = 'Mật khẩu phải có ít nhất 6 ký tự';
+            return;
+        }
+        if (password !== confirm) {
+            registerError.textContent = 'Mật khẩu xác nhận không khớp';
+            return;
+        }
+
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Đang đăng ký...';
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            registerSuccess.textContent = '✅ Đăng ký thành công!';
+            registerError.textContent = '';
+            
+            // Auto switch to login after success
+            setTimeout(() => {
+                registerBox.style.display = 'none';
+                loginBox.style.display = 'block';
+                loginEmail.value = email;
+                loginPassword.value = '';
+                registerSuccess.textContent = '';
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Đăng ký';
+            }, 1500);
+
+        } catch (error) {
+            let msg = 'Đăng ký thất bại';
+            if (error.code === 'auth/email-already-in-use') msg = 'Email đã được sử dụng';
+            else if (error.code === 'auth/invalid-email') msg = 'Email không hợp lệ';
+            else if (error.code === 'auth/weak-password') msg = 'Mật khẩu quá yếu';
+            registerError.textContent = '❌ ' + msg;
+            registerBtn.disabled = false;
+            registerBtn.textContent = 'Đăng ký';
+        }
+    });
+
+    // Login
+    loginBtn.addEventListener('click', async () => {
+        const email = loginEmail.value.trim();
+        const password = loginPassword.value;
+
+        loginError.textContent = '';
+
+        if (!email || !password) {
+            loginError.textContent = 'Vui lòng nhập email và mật khẩu';
+            return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Đang đăng nhập...';
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            loginError.textContent = '';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Đăng nhập';
+        } catch (error) {
+            let msg = 'Đăng nhập thất bại';
+            if (error.code === 'auth/user-not-found') msg = 'Tài khoản không tồn tại';
+            else if (error.code === 'auth/wrong-password') msg = 'Sai mật khẩu';
+            else if (error.code === 'auth/invalid-email') msg = 'Email không hợp lệ';
+            else if (error.code === 'auth/too-many-requests') msg = 'Quá nhiều lần thử, vui lòng thử lại sau';
+            loginError.textContent = '❌ ' + msg;
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Đăng nhập';
+        }
+    });
+
+    // Enter key support
+    loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn.click(); });
+    registerPasswordConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerBtn.click(); });
+
+    // Logout
+    logoutBtn.addEventListener('click', async () => {
+        await signOut(auth);
+    });
+
+    // Auth state listener
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            currentUserId = user.uid;
+            userEmailDisplay.textContent = user.email;
+            loginOverlay.style.display = 'none';
+            mainContent.style.display = 'block';
+            // Initialize app after login
+            initApp();
+        } else {
+            currentUser = null;
+            currentUserId = null;
+            loginOverlay.style.display = 'flex';
+            mainContent.style.display = 'none';
+            // Reset login form
+            loginPassword.value = '';
+            loginError.textContent = '';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Đăng nhập';
+            // Show login box by default
+            loginBox.style.display = 'block';
+            registerBox.style.display = 'none';
+        }
+    });
+
+    // ================ APP LOGIC ================
+    let currentViewDate = new Date();
+    let activeDropdownId = '';
+    const fields = ['mttq-kq', 'mttq-ph', 'dtn-kq', 'dtn-ph', 'ccb-kq', 'ccb-ph', 'pn-kq', 'pn-ph'];
+    const daysOfWeek = ['t2', 't3', 't4', 't5', 't6', 't7', 'cn'];
+    const dayNames = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+    const dayLabels = ['lbl-t2', 'lbl-t3', 'lbl-t4', 'lbl-t5', 'lbl-t6', 'lbl-t7', 'lbl-cn'];
+
+    function getWeekData(date) {
+        let d = new Date(date);
+        d.setHours(0,0,0,0);
+        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+        let yearStart = new Date(d.getFullYear(), 0, 1);
+        let weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        let monday = new Date(d); monday.setDate(monday.getDate() - 3);
+        let sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+        return { weekNo, monday, sunday, year: d.getFullYear() };
+    }
+
+    function initAllWeekSelects() {
+        const selects = ['week-select-box', 'schedule-week-select', 'view-schedule-week-select'];
+        const now = new Date();
+        const currentData = getWeekData(now);
+        
+        let weekDate = new Date(now.getFullYear(), 0, 1);
+        weekDate.setDate(weekDate.getDate() + (weekDate.getDay() === 1 ? 0 : (8 - weekDate.getDay()) % 7));
+
+        let optionsHtml = "";
+        for (let i = 1; i <= 53; i++) {
+            let data = getWeekData(weekDate);
+            if (data.year > now.getFullYear()) break;
+            let val = JSON.stringify(data);
+            let selectedAttr = (data.weekNo === currentData.weekNo) ? 'selected' : '';
+            optionsHtml += `<option value='${val}' ${selectedAttr}>Tuần ${data.weekNo} (${data.monday.getDate()}/${data.monday.getMonth()+1} - ${data.sunday.getDate()}/${data.sunday.getMonth()+1})</option>`;
+            weekDate.setDate(weekDate.getDate() + 7);
+        }
+        
+        selects.forEach(id => {
+            document.getElementById(id).innerHTML = optionsHtml;
+        });
+
+        // Initialize handlers
+        handleWeekChange(document.getElementById('week-select-box').value);
+        handleScheduleWeekChange(document.getElementById('schedule-week-select').value);
+        handleViewScheduleWeekChange(document.getElementById('view-schedule-week-select').value);
+    }
+
+    // --- TAB 1 HANDLERS ---
+    function handleWeekChange(value) {
+        const data = JSON.parse(value);
+        document.getElementById('w').value = data.weekNo;
+        document.getElementById('m').value = String(new Date(data.monday).getMonth() + 1).padStart(2, '0');
+        document.getElementById('y').value = data.year;
+        document.getElementById('date-from').value = new Date(data.monday).toISOString().split('T')[0];
+        document.getElementById('date-to').value = new Date(data.sunday).toISOString().split('T')[0];
+        currentViewDate = new Date(data.monday);
+        renderCalendar();
+        loadCurrentWeekData();
+    }
+
+    document.getElementById('week-select-box').onchange = (e) => handleWeekChange(e.target.value);
+
+    async function loadCurrentWeekData() {
+        if (!currentUserId) return;
+        const y = document.getElementById('y').value, w = document.getElementById('w').value;
+        document.getElementById('load-status').innerText = "⌛ Đang tải...";
+        const snap = await get(ref(db, `users/${currentUserId}/reports/${y}/week_${w}`));
+        if (snap.exists()) {
+            const data = snap.val();
+            fields.forEach(f => { const [org, type] = f.split('-'); document.getElementById(f).value = data[org]?.[type] || ""; });
+            document.getElementById('load-status').innerText = "✅ Đã tải.";
+        } else {
+            fields.forEach(id => document.getElementById(id).value = "");
+            document.getElementById('load-status').innerText = "✨ Tuần mới.";
+        }
+    }
+
+    document.getElementById('saveBtn').onclick = async () => {
+        if (!currentUserId) { alert('Vui lòng đăng nhập!'); return; }
+        const w = document.getElementById('w').value, y = document.getElementById('y').value;
+        const data = {
+            monthRef: document.getElementById('m').value,
+            dateFrom: document.getElementById('date-from').value,
+            dateTo: document.getElementById('date-to').value,
+            mttq: { kq: document.getElementById('mttq-kq').value, ph: document.getElementById('mttq-ph').value },
+            dtn: { kq: document.getElementById('dtn-kq').value, ph: document.getElementById('dtn-ph').value },
+            ccb: { kq: document.getElementById('ccb-kq').value, ph: document.getElementById('ccb-ph').value },
+            pn: { kq: document.getElementById('pn-kq').value, ph: document.getElementById('pn-ph').value }
+        };
+        await set(ref(db, `users/${currentUserId}/reports/${y}/week_${w}`), data);
+        alert("✅ Đã lưu báo cáo thành công!");
+    };
+
+    // --- TAB 2: SCHEDULE ---
+    function handleScheduleWeekChange(value) {
+        const data = JSON.parse(value);
+        document.getElementById('sch-w').value = data.weekNo;
+        document.getElementById('sch-y').value = data.year;
+        currentViewDate = new Date(data.monday);
+        
+        let start = new Date(data.monday);
+        daysOfWeek.forEach((day, idx) => {
+            let currentDay = new Date(start);
+            currentDay.setDate(start.getDate() + idx);
+            document.getElementById(`lbl-${day}`).innerText = `${currentDay.getDate()}/${currentDay.getMonth()+1}`;
+        });
+
+        updateScheduleTitle();
+        renderCalendar();
+        loadScheduleData();
+    }
+
+    document.getElementById('schedule-week-select').onchange = (e) => handleScheduleWeekChange(e.target.value);
+
+    function updateScheduleTitle() {
+        const selectSchedule = document.getElementById('schedule-week-select');
+        if (!selectSchedule.value) return;
+        
+        const data = JSON.parse(selectSchedule.value);
+        const w = data.weekNo;
+        const y = data.year;
+        
+        const mondayDate = new Date(data.monday);
+        const sundayDate = new Date(data.sunday);
+        const fromStr = `${mondayDate.getDate()}/${mondayDate.getMonth() + 1}`;
+        const toStr = `${sundayDate.getDate()}/${sundayDate.getMonth() + 1}`;
+        
+        document.getElementById('sch-title').innerText = `LỊCH CÔNG TÁC TUẦN ${w} (Từ ${fromStr} - ${toStr}) - NĂM ${y}`;
+        document.getElementById('sch-subtitle').innerText = `Đơn vị: Mặt trận Tổ quốc Việt Nam phường Ninh Kiều`;
+    }
+
+    async function loadScheduleData() {
+        if (!currentUserId) return;
+        const y = document.getElementById('sch-y').value;
+        const w = document.getElementById('sch-w').value;
+        const ind = document.getElementById('schedule-industry-select').value;
+        
+        document.getElementById('schedule-load-status').innerText = "⌛ Đang tải lịch...";
+        
+        const snap = await get(ref(db, `users/${currentUserId}/schedule/${y}/week_${w}/${ind}`));
+        if(snap.exists()) {
+            const data = snap.val();
+            daysOfWeek.forEach(day => {
+                document.getElementById(`sch-${day}-sang`).value = data[day]?.sang || "";
+                document.getElementById(`sch-${day}-chieu`).value = data[day]?.chieu || "";
+                document.getElementById(`sch-${day}-toi`).value = data[day]?.toi || "";
+            });
+            document.getElementById('schedule-load-status').innerText = "✅ Đã tải lịch.";
+        } else {
+            daysOfWeek.forEach(day => {
+                document.getElementById(`sch-${day}-sang`).value = "";
+                document.getElementById(`sch-${day}-chieu`).value = "";
+                document.getElementById(`sch-${day}-toi`).value = "";
+            });
+            document.getElementById('schedule-load-status').innerText = "✨ Lịch trống.";
+        }
+    }
+
+    document.getElementById('scheduleSaveBtn').onclick = async () => {
+        if (!currentUserId) { alert('Vui lòng đăng nhập!'); return; }
+        const y = document.getElementById('sch-y').value;
+        const w = document.getElementById('sch-w').value;
+        const ind = document.getElementById('schedule-industry-select').value;
+
+        let scheduleData = {};
+        daysOfWeek.forEach(day => {
+            scheduleData[day] = {
+                sang: document.getElementById(`sch-${day}-sang`).value,
+                chieu: document.getElementById(`sch-${day}-chieu`).value,
+                toi: document.getElementById(`sch-${day}-toi`).value
+            };
+        });
+
+        await set(ref(db, `users/${currentUserId}/schedule/${y}/week_${w}/${ind}`), scheduleData);
+        alert("✅ Đã lưu lịch công tác tuần thành công!");
+    };
+
+    // --- TAB 3: VIEW SCHEDULE ---
+    function handleViewScheduleWeekChange(value) {
+        const data = JSON.parse(value);
+        document.getElementById('view-sch-w').value = data.weekNo;
+        document.getElementById('view-sch-y').value = data.year;
+        currentViewDate = new Date(data.monday);
+        renderCalendar();
+        loadViewScheduleData(data);
+    }
+
+    document.getElementById('view-schedule-week-select').onchange = (e) => handleViewScheduleWeekChange(e.target.value);
+
+    async function loadViewScheduleData(weekData) {
+        if (!currentUserId) return;
+        const y = weekData.year;
+        const w = weekData.weekNo;
+        const ind = 'MTTQ';
+        
+        document.getElementById('view-schedule-load-status').innerText = "⌛ Đang tải lịch...";
+        
+        const snap = await get(ref(db, `users/${currentUserId}/schedule/${y}/week_${w}/${ind}`));
+        
+        const mondayDate = new Date(weekData.monday);
+        const sundayDate = new Date(weekData.sunday);
+        const fromStr = `${mondayDate.getDate()}/${mondayDate.getMonth() + 1}`;
+        const toStr = `${sundayDate.getDate()}/${sundayDate.getMonth() + 1}`;
+        document.getElementById('view-sch-title').innerText = `LỊCH CÔNG TÁC TUẦN ${w} (Từ ${fromStr} - ${toStr}) - NĂM ${y}`;
+        document.getElementById('view-sch-subtitle').innerText = `Đơn vị: Mặt trận Tổ quốc Việt Nam phường Ninh Kiều`;
+        
+        let data = {};
+        if(snap.exists()) {
+            data = snap.val();
+            document.getElementById('view-schedule-load-status').innerText = "✅ Đã tải lịch.";
+        } else {
+            document.getElementById('view-schedule-load-status').innerText = "✨ Lịch trống.";
+        }
+        
+        const container = document.getElementById('view-schedule-list');
+        let html = '';
+        
+        const dayIds = ['t2', 't3', 't4', 't5', 't6', 't7', 'cn'];
+        const dayNamesFull = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+        
+        let start = new Date(weekData.monday);
+        
+        dayIds.forEach((dayId, idx) => {
+            let currentDay = new Date(start);
+            currentDay.setDate(start.getDate() + idx);
+            const dateStr = `${currentDay.getDate()}/${currentDay.getMonth()+1}/${currentDay.getFullYear()}`;
+            
+            const dayData = data[dayId] || {};
+            const sang = dayData.sang || '';
+            const chieu = dayData.chieu || '';
+            const toi = dayData.toi || '';
+            
+            const hasEvent = sang || chieu || toi;
+            
+            html += `<div class="schedule-view-item">`;
+            html += `<div class="schedule-view-day">${dayNamesFull[idx]}, NGÀY ${dateStr}</div>`;
+            html += `<div class="schedule-view-content">`;
+            
+            if (sang) {
+                html += `<div class="event-item">- <span class="event-label">Buổi Sáng:</span> ${sang.replace(/\n/g, '<br>')}</div>`;
+            }
+            if (chieu) {
+                html += `<div class="event-item">- <span class="event-label">Buổi Chiều:</span> ${chieu.replace(/\n/g, '<br>')}</div>`;
+            }
+            if (toi) {
+                html += `<div class="event-item">- <span class="event-label">Buổi Tối:</span> ${toi.replace(/\n/g, '<br>')}</div>`;
+            }
+            if (!hasEvent) {
+                html += `<div class="schedule-view-empty">Không có sự kiện</div>`;
+            }
+            
+            html += `</div></div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    // --- EXPORT FUNCTIONS ---
+    window.exportViewScheduleToWord = function() {
+        const container = document.getElementById('view-schedule-display');
+        const content = container.innerHTML;
+        const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><style>
+            .schedule-view-item { border-bottom: 1px solid #d3d3d3; padding: 15px 0; }
+            .schedule-view-day { text-align: center; color: #c00000; font-family: 'Times New Roman'; font-size: 14pt; font-weight: bold; margin-bottom: 8px; }
+            .schedule-view-content { font-family: 'Times New Roman'; font-size: 11pt; line-height: 1.5; padding-left: 10px; }
+            .event-item { margin: 4px 0; }
+            .event-label { font-weight: bold; }
+            .schedule-view-empty { color: #7f7f7f; font-style: italic; margin: 4px 0; }
+            .schedule-view-title { text-align: center; font-family: 'Times New Roman'; font-size: 16pt; color: #002060; margin: 0 0 5px 0; }
+            .schedule-view-subtitle { text-align: center; font-style: italic; font-family: 'Times New Roman'; font-size: 12pt; color: #404040; margin: 0 0 25px 0; }
+        </style></head><body>`;
+        const footer = "</body></html>";
+        const blob = new Blob(['\ufeff', header + content + footer], { type: 'application/msword' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        const weekNum = document.getElementById('view-sch-w').value || 'XX';
+        link.download = `Lich_Cong_Tac_Tuan_${weekNum}.doc`;
+        link.click();
+    };
+
+    window.exportScheduleToWord = function() {
+        const title = document.getElementById('sch-title').innerText;
+        const subtitle = document.getElementById('sch-subtitle').innerText;
+        const weekNum = document.getElementById('sch-w').value;
+        
+        let listContentHtml = "";
+        const days = [
+            {lbl: 'THỨ HAI', id: 't2'}, {lbl: 'THỨ BA', id: 't3'}, {lbl: 'THỨ TƯ', id: 't4'},
+            {lbl: 'THỨ NĂM', id: 't5'}, {lbl: 'THỨ SÁU', id: 't6'}, {lbl: 'THỨ BẢY', id: 't7'}, {lbl: 'CHỦ NHẬT', id: 'cn'}
+        ];
+        
+        days.forEach(d => {
+            const dateStr = document.getElementById(`lbl-${d.id}`).innerText;
+            const yearStr = document.getElementById('sch-y').value;
+            
+            let fullDateLabel = `${d.lbl}, NGÀY ${dateStr}/${yearStr}`;
+            
+            const sangVal = document.getElementById(`sch-${d.id}-sang`).value.trim() || "";
+            const chieuVal = document.getElementById(`sch-${d.id}-chieu`).value.trim() || "";
+            const toiVal = document.getElementById(`sch-${d.id}-toi`).value.trim() || "";
+            
+            listContentHtml += `
+                <div style="text-align: center; margin-top: 20px; margin-bottom: 10px;">
+                    <b style="color: #c00000; font-family: 'Times New Roman'; font-size: 14pt;">${fullDateLabel}</b>
+                </div>
+            `;
+            
+            let dayHasEvent = false;
+            const formatContent = (text) => text.replace(/\n/g, '<br>');
+
+            if (sangVal) {
+                listContentHtml += `<p style="font-family: 'Times New Roman'; font-size: 11pt; margin: 4px 0; line-height: 1.3;">- <b>Buổi Sáng:</b> ${formatContent(sangVal)}</p>`;
+                dayHasEvent = true;
+            }
+            if (chieuVal) {
+                listContentHtml += `<p style="font-family: 'Times New Roman'; font-size: 11pt; margin: 4px 0; line-height: 1.3;">- <b>Buổi Chiều:</b> ${formatContent(chieuVal)}</p>`;
+                dayHasEvent = true;
+            }
+            if (toiVal) {
+                listContentHtml += `<p style="font-family: 'Times New Roman'; font-size: 11pt; margin: 4px 0; line-height: 1.3;">- <b>Buổi Tối:</b> ${formatContent(toiVal)}</p>`;
+                dayHasEvent = true;
+            }
+            
+            if (!dayHasEvent) {
+                listContentHtml += `<p style="font-family: 'Times New Roman'; font-size: 10pt; color: #7f7f7f; font-style: italic; margin: 4px 0;">Không có sự kiện</p>`;
+            }
+            
+            listContentHtml += `<div style="border-bottom: 1px solid #d3d3d3; margin-top: 15px; margin-bottom: 5px;"></div>`;
+        });
+
+        const fullContent = `
+            <h2 style="text-align: center; margin: 0 0 5px 0; font-family: 'Times New Roman'; font-size: 16pt; color: #002060;">${title}</h2>
+            <p style="text-align: center; font-style: italic; margin: 0 0 25px 0; font-family: 'Times New Roman'; font-size: 12pt; color: #404040;">${subtitle}</p>
+            <div style="width: 100%;">
+                ${listContentHtml}
+            </div>
+        `;
+
+        const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style="padding: 20px;">`;
+        const footer = "</body></html>";
+        const blob = new Blob(['\ufeff', header + fullContent + footer], { type: 'application/msword' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Lich_Cong_Tac_Tuan_${weekNum}.doc`; 
+        link.click();
+    };
+
+    // --- TAB 4: SUMMARY ---
+    window.toggleViewInputs = () => {
+        const type = document.getElementById('view-type').value;
+        document.getElementById('input-week-group').style.display = (type === 'week') ? 'inline' : 'none';
+        document.getElementById('view-m').style.display = (type === 'month') ? 'inline' : 'none';
+    };
+
+    document.getElementById('aggBtn').onclick = async () => {
+        if (!currentUserId) { alert('Vui lòng đăng nhập!'); return; }
+        const type = document.getElementById('view-type').value;
+        const yy = document.getElementById('view-y').value;
+        const mm = document.getElementById('view-m').value;
+        const ww = document.getElementById('view-w').value;
+
+        const snap = await get(ref(db, `users/${currentUserId}/reports/${yy}`));
+        if (!snap.exists()) { alert("Không có dữ liệu!"); return; }
+        
+        const all = snap.val();
+        let agg = { mttq:{kq:'',ph:''}, dtn:{kq:'',ph:''}, ccb:{kq:'',ph:''}, pn:{kq:'',ph:''} };
+        let targetWeeks = [];
+        let title = "";
+
+        if (type === 'week') {
+            targetWeeks = Object.keys(all).filter(k => k === `week_${ww}`);
+            title = `TUẦN ${ww} NĂM ${yy}`;
+        } else if (type === 'month') {
+            targetWeeks = Object.keys(all).filter(k => all[k].monthRef === mm);
+            title = `THÁNG ${mm} NĂM ${yy}`;
+        } else {
+            targetWeeks = Object.keys(all);
+            title = `NĂM ${yy}`;
+        }
+
+        if(targetWeeks.length === 0) { alert("Không thấy dữ liệu!"); return; }
+        targetWeeks.sort((a,b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
+
+        targetWeeks.forEach(k => {
+            const d = all[k], n = k.split('_')[1];
+            const range = ` (Tuần ${n}: ${d.dateFrom.split('-').reverse().slice(0,2).join('/')}-${d.dateTo.split('-').reverse().slice(0,2).join('/')})`;
+            ['mttq','dtn','ccb','pn'].forEach(o => {
+                if(d[o]?.kq) agg[o].kq += `<div style="margin-bottom:10px;"><b>${range}:</b><br>${d[o].kq.replace(/\n/g,'<br>')}</div>`;
+                if(d[o]?.ph) agg[o].ph += `<div style="margin-bottom:10px;">${d[o].ph.replace(/\n/g,'<br>')}</div>`;
+            });
+        });
+
+        document.getElementById('out-time').innerText = title;
+        document.getElementById('out-body').innerHTML = `
+            <tr><td><b>MTTQ</b></td><td>${agg.mttq.kq || '...'}</td><td>${agg.mttq.ph || '...'}</td></tr>
+            <tr><td><b>Đoàn TN</b></td><td>${agg.dtn.kq || '...'}</td><td>${agg.dtn.ph || '...'}</td></tr>
+            <tr><td><b>CCB</b></td><td>${agg.ccb.kq || '...'}</td><td>${agg.ccb.ph || '...'}</td></tr>
+            <tr><td><b>Phụ Nữ</b></td><td>${agg.pn.kq || '...'}</td><td>${agg.pn.ph || '...'}</td></tr>`;
+    };
+
+    window.exportToWord = function() {
+        const content = document.getElementById('capture-area').innerHTML;
+        const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><style>table {border-collapse:collapse; width:100%;} th, td {border:1px solid black; padding:10px; vertical-align: top; font-family: "Times New Roman";} h2 {text-align: center;} </style></head><body>`;
+        const footer = "</body></html>";
+        const blob = new Blob(['\ufeff', header + content + footer], { type: 'application/msword' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Bao_Cao_Tong_Hop.doc`;
+        link.click();
+    };
+
+    // --- CALENDAR ---
+    window.changeMonth = (offset) => { currentViewDate.setMonth(currentViewDate.getMonth() + offset); renderCalendar(); };
+    
+    function renderCalendar() {
+        if (!activeDropdownId) return;
+        const container = document.getElementById(activeDropdownId);
+        const year = currentViewDate.getFullYear(); const month = currentViewDate.getMonth();
+        container.querySelector('.cal-month-year-lbl').innerText = `Tháng ${month + 1}/${year}`;
+        
+        let startDay = new Date(year, month, 1);
+        startDay.setDate(startDay.getDate() - (startDay.getDay() === 0 ? 6 : startDay.getDay() - 1));
+        
+        let html = ''; 
+        let selectedW = '';
+        let selectedY = '';
+        if (activeDropdownId === 'calendar-dropdown') {
+            selectedW = document.getElementById('w').value;
+            selectedY = document.getElementById('y').value;
+        } else if (activeDropdownId === 'schedule-calendar-dropdown') {
+            selectedW = document.getElementById('sch-w').value;
+            selectedY = document.getElementById('sch-y').value;
+        } else if (activeDropdownId === 'view-schedule-calendar-dropdown') {
+            selectedW = document.getElementById('view-sch-w').value;
+            selectedY = document.getElementById('view-sch-y').value;
+        }
+        
+        for (let i = 0; i < 6; i++) {
+            let rowDate = new Date(startDay);
+            let weekNum = getWeekData(rowDate).weekNo;
+            let isSelected = (weekNum == selectedW && rowDate.getFullYear() == selectedY);
+            html += `<tr class="${isSelected ? 'selected-week' : ''}" onclick="selectWeek(this, '${rowDate.toISOString()}')">`;
+            html += `<td style="color:#999; font-size:11px;">${weekNum}</td>`;
+            for (let j = 0; j < 7; j++) {
+                html += `<td style="${startDay.getMonth() !== month ? 'color:#ccc':''}">${startDay.getDate()}</td>`;
+                startDay.setDate(startDay.getDate() + 1);
+            }
+            html += '</tr>';
+        }
+        container.querySelector('.cal-body-content').innerHTML = html;
+    }
+
+    window.selectWeek = (row, startDateStr) => {
+        let weekInfo = getWeekData(new Date(startDateStr));
+        let selectId = '';
+        if (activeDropdownId === 'calendar-dropdown') {
+            selectId = 'week-select-box';
+        } else if (activeDropdownId === 'schedule-calendar-dropdown') {
+            selectId = 'schedule-week-select';
+        } else if (activeDropdownId === 'view-schedule-calendar-dropdown') {
+            selectId = 'view-schedule-week-select';
+        }
+        
+        if (selectId) {
+            const select = document.getElementById(selectId);
+            for(let opt of select.options){
+                if(JSON.parse(opt.value).weekNo == weekInfo.weekNo) { 
+                    opt.selected = true; 
+                    if (selectId === 'week-select-box') handleWeekChange(opt.value);
+                    else if (selectId === 'schedule-week-select') handleScheduleWeekChange(opt.value);
+                    else if (selectId === 'view-schedule-week-select') handleViewScheduleWeekChange(opt.value);
+                    break; 
+                }
+            }
+        }
+        document.getElementById(activeDropdownId).style.display = 'none';
+        activeDropdownId = '';
+    };
+
+    window.toggleCalendar = (e, id) => {
+        e.stopPropagation();
+        document.querySelectorAll('.calendar-dropdown-cls').forEach(el => { if(el.id !== id) el.style.display='none'; });
+        const cal = document.getElementById(id);
+        if (cal.style.display === 'block') {
+            cal.style.display = 'none';
+            activeDropdownId = '';
+        } else {
+            cal.style.display = 'block';
+            activeDropdownId = id;
+            renderCalendar();
+        }
+    };
+
+    window.onclick = () => {
+        document.querySelectorAll('.calendar-dropdown-cls').forEach(el => el.style.display = 'none');
+        activeDropdownId = '';
+    };
+
+    // --- OPEN TAB ---
+    window.openTab = function(evt, name) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+        document.getElementById(name).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    };
+
+    // --- INIT APP ---
+    function initApp() {
+        initAllWeekSelects();
+        toggleViewInputs();
+    }
+
+    // Initialization is called from onAuthStateChanged
+</script>
+
+</body>
+</html>
